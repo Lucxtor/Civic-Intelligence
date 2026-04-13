@@ -6,7 +6,7 @@ The goal is to build a high-fidelity frontend MVP with Next.js mapping out a mul
 
 ## Phases
 
-- [ ] **Phase 1: Project Setup & Global Design System** - Scaffold project and global theme
+- [x] **Phase 1: Project Setup & Global Design System** - Scaffold project and global theme
 - [ ] **Phase 2: Authentication & Mock Identity Flow** - Web3 Connect and conceptual ZKP onboarding
 - [ ] **Phase 3: Proposal Discovery & Detail Components** - Bento box UI for reading proposals
 - [ ] **Phase 4: Feedback Mechanism** - Multi-dimensional dynamic voting UI
@@ -89,7 +89,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Project Setup | 0/3 | Planned | - |
+| 1. Project Setup | 3/3 | Completed | 2026-04-13 |
 | 2. Connect & Identity | 0/2 | Not started | - |
 | 3. Discovery & Detail | 0/3 | Not started | - |
 | 4. Feedback System | 0/2 | Not started | - |
