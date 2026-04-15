@@ -24,7 +24,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 const config = getDefaultConfig({
   appName: 'Ipê Civic Intelligence',
-  projectId: 'b10b05b38ed6a94de20db917c8cfebbc', // Placeholder for mock use
+  projectId: '10a5257c04d1dcdacfacbc26b6e62ba6', // Public WalletConnect demo ID
   chains: [mainnet, polygon, optimism, arbitrum, base, sepolia],
   ssr: true,
 });
