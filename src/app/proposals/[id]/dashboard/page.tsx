@@ -22,7 +22,13 @@ export default function CivicPulseDashboard() {
   const proposalVotes = votes[id] || [];
   const hasVotes = proposalVotes.length > 0;
 
-  if (!proposal) return null;
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!proposal || !isMounted) return null;
 
   // Placeholder Data for Recharts Initialization Shell
   const pieData = [

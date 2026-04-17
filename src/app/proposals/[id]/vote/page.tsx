@@ -46,24 +46,36 @@ export default function NuanceVotePage() {
       return;
     }
 
-    // Determine derived demographics from Wallet Address (mock mechanism for phase 1.1)
-    const mockAge = address ? parseInt(address.slice(2, 4), 16) % 50 + 18 : 30; // Random deterministic age from address hash
-    
-    await new Promise(r => setTimeout(r, 600));
+    try {
+      const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: address,
+          proposalId: proposal.id,
+          responses,
+        })
+      });
 
-    setVote(proposal.id, {
-      proposalId: proposal.id,
-      voterId: address || 'anonymous',
-      demographics: {
-         age: mockAge,
-         location: 'Florianópolis'
-      },
-      responses,
-      comment: comment.trim() !== '' ? comment : undefined
-    });
+      if (!res.ok) {
+        throw new Error('Failed to submit vote. Ensure your civic context is registered.');
+      }
 
-    setIsSubmitting(false);
-    router.push(`/proposals/${proposal.id}/dashboard`);
+      // Sync to mock store for backwards compatibility with front-end dashboards in Phase 1
+      setVote(proposal.id, {
+        proposalId: proposal.id,
+        voterId: 'anonymous_voter', // Privacy
+        demographics: { age: 32, location: 'Centro' }, // Fallback mock structure
+        responses,
+        comment: comment.trim() !== '' ? comment : undefined
+      });
+
+      router.push(`/proposals/${proposal.id}/dashboard`);
+    } catch (error: any) {
+      alert(error.message || 'Submission failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
