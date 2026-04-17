@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// A connected wallet address and their self-reported demographic profile.
+model User {
+  walletAddress String   @id @map("wallet_address")
+  demographics  String   // JSON string: { "ageGroup": "25–34", "occupation": "Tech Worker", ... }
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+/// Admin-managed demographic dimensions.
+/// e.g. { key: "ageGroup", label: "Age Group", options: ["18–24", "25–34", ...] }
+model DemographicDimension {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  options   String   // JSON string: array of option strings
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("demographic_dimensions")
+}
+
+/// Anonymized vote — wallet address is NEVER stored here.
+model AnonymizedVote {
+  id           String   @id @default(cuid())
+  proposalId   String   @map("proposal_id")
+  demographics String   // JSON string: demographic tags only, no wallet
+  responses    String   // JSON string: { "fairness": 4, "feasibility": 3, ... }
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("anonymized_votes")
+}
