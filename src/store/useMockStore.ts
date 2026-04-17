@@ -4,7 +4,7 @@ import { Proposal, UserVote } from '@/types';
 
 interface MockStore {
   proposals: Proposal[];
-  votes: Record<string, UserVote>;
+  votes: Record<string, UserVote[]>; // Updated to support multiple votes per proposal
   addProposal: (proposal: Proposal) => void;
   setVote: (proposalId: string, voteData: UserVote) => void;
   resetStore: () => void;
@@ -75,19 +75,23 @@ const INITIAL_PROPOSALS: Proposal[] = [
   }
 ];
 
-const INITIAL_VOTES: Record<string, UserVote> = {
-  'prop-1': {
-    proposalId: 'prop-1',
-    voterId: '0xMockDemoVoter',
-    demographics: { age: 30, location: 'Florianopolis' },
-    responses: {} // Mock responses
-  },
-  'prop-2': {
-    proposalId: 'prop-2',
-    voterId: '0xMockDemoVoter2',
-    demographics: { age: 45, location: 'Florianopolis' },
-    responses: {}
-  }
+const INITIAL_VOTES: Record<string, UserVote[]> = {
+  'prop-1': [
+    {
+      proposalId: 'prop-1',
+      voterId: '0xMockDemoVoter',
+      demographics: { age: 30, location: 'Centro' },
+      responses: {} // Mock responses
+    }
+  ],
+  'prop-2': [
+    {
+      proposalId: 'prop-2',
+      voterId: '0xMockDemoVoter2',
+      demographics: { age: 45, location: 'Trindade' },
+      responses: {}
+    }
+  ]
 };
 
 export const useMockStore = create<MockStore>()(
@@ -97,19 +101,20 @@ export const useMockStore = create<MockStore>()(
       votes: INITIAL_VOTES,
       addProposal: (proposal) => 
         set((state) => ({ 
-          proposals: [proposal, ...state.proposals] 
+          proposals: [proposal, ...state.proposals],
+          votes: { ...state.votes, [proposal.id]: [] }
         })),
       setVote: (proposalId, voteData) => 
         set((state) => ({
           votes: {
             ...state.votes,
-            [proposalId]: voteData
+            [proposalId]: [...(state.votes[proposalId] || []), voteData]
           }
         })),
       resetStore: () => set({ proposals: INITIAL_PROPOSALS, votes: INITIAL_VOTES })
     }),
     {
-      name: 'civic-intelligence-storage-v3', // Updated version to trigger mock votes cascade
+      name: 'civic-intelligence-storage-v4', // Updated version to trigger mock votes cascade
     }
   )
 );

@@ -10,8 +10,68 @@ import {
   BarChart3, 
   Users, 
   Zap, 
-  ArrowRight 
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
+
+const pricingPlans = [
+  {
+    name: "Citizen",
+    price: "Free",
+    period: "",
+    description: "For active community participants to view proposals and vote.",
+    features: [
+      "View global proposals",
+      "Read ELI5 abstracts",
+      "Multi-dimensional Nuance Voting",
+      "Civic Pulse Dashboard access"
+    ],
+    buttonText: "Explore Platform",
+    href: "/proposals",
+    popular: false,
+    baseColor: "border-blue-400/20",
+    accentColor: "text-blue-400",
+    buttonStyle: "bg-white/5 hover:bg-white/10 border border-white/10"
+  },
+  {
+    name: "DAO Forge",
+    price: "$29",
+    period: "/month",
+    description: "Launch your own isolated Civic Intelligence governance structure.",
+    features: [
+      "Custom isolated instance (e.g. ipe.civic)",
+      "Dedicated Admin Proposal Forge",
+      "Custom Theme & Branding colors",
+      "Private demographic allowlisting",
+      "Priority API access"
+    ],
+    buttonText: "Create Instance",
+    href: "/admin",
+    popular: true,
+    baseColor: "border-ipe-green/50 shadow-lg shadow-ipe-green/10",
+    accentColor: "text-ipe-green",
+    buttonStyle: "bg-ipe-green text-black hover:bg-ipe-green/90 shadow-lg shadow-ipe-green/20"
+  },
+  {
+    name: "Network Protocol",
+    price: "Enterprise",
+    period: "",
+    description: "Multi-tenant clusters for large municipalities or protocols.",
+    features: [
+      "Unlimited DAO Sub-instances",
+      "On-chain Contract Deployments",
+      "Zero-Knowledge Proof Tooling",
+      "Dedicated Integration Support",
+      "SLA & Guarantee"
+    ],
+    buttonText: "Contact Sales",
+    href: "#",
+    popular: false,
+    baseColor: "border-ipe-magenta/20",
+    accentColor: "text-ipe-magenta",
+    buttonStyle: "bg-white/5 hover:bg-white/10 border border-white/10"
+  }
+];
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -210,6 +270,76 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Subscription Pricing Section */}
+      <section className="py-24 relative overflow-hidden">
+        {/* Subtle background glow for pricing */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-ipe-green/5 rounded-full blur-[150px] pointer-events-none" />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-heading font-bold mb-4">
+              Launch Your Own Civic Platform
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Participate for free on the global layer, or instantiate your own isolated DAO governance structure with custom domains and logic.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {pricingPlans.map((plan, i) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ delay: i * 0.15 }}
+                className={`relative flex flex-col glass-panel p-8 rounded-3xl border transition-all duration-300 hover:-translate-y-2 ${plan.baseColor}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-ipe-green text-black text-xs font-bold uppercase tracking-widest rounded-full shadow-lg shadow-ipe-green/20">
+                    Most Popular
+                  </div>
+                )}
+                
+                <div className="mb-6">
+                  <h3 className="font-heading font-bold text-xl mb-2">{plan.name}</h3>
+                  <div className="flex items-end gap-1 mb-4">
+                    <span className="text-4xl font-bold font-mono">{plan.price}</span>
+                    <span className="text-muted-foreground pb-1">{plan.period}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground min-h-[40px] leading-relaxed">
+                    {plan.description}
+                  </p>
+                </div>
+
+                <div className="flex-1 mb-8">
+                  <div className="space-y-4">
+                    {plan.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${plan.accentColor}`} />
+                        <span className="text-sm font-medium">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Link
+                  href={plan.href}
+                  className={`w-full text-center py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${plan.buttonStyle}`}
+                >
+                  {plan.buttonText}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Footer CTA */}
       <section className="py-24">

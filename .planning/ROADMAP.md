@@ -8,6 +8,7 @@ The goal is to build a high-fidelity frontend MVP with Next.js mapping out a mul
 
 - [x] **Phase 1: Project Setup & Global Design System** - Scaffold project and global theme
 - [/] **Phase 1.1: Platform Scaffolding** - Shells for all pages (Admin, Discovery, Vote, Dashboard)
+- [x] **Phase 01.2: Logged in wallet user creates DAO structure or subscription** - Subscription tiers on landing page
 - [ ] **Phase 2: Authentication & Wallet Identity** - RainbowKit integration for demographic data
 - [ ] **Phase 3: Proposal Presentation Refinement** - Enhancing the Bento box and Detail views
 - [ ] **Phase 4: Feedback Mechanism Polish** - Dynamic multi-metric sliders
@@ -28,6 +29,16 @@ The goal is to build a high-fidelity frontend MVP with Next.js mapping out a mul
 Plans:
 - [x] 01-01: Initialize Next.js, Tailwind, Shadcn.
 - [x] 01-02: Configure global layout and design variables.
+
+### Phase 01.2: Logged in wallet user creates DAO structure or subscription (INSERTED)
+
+**Goal:** Implement subscription pricing tiers on the landing page for multi-tenant DAO instantiation.
+**Requirements:** AUTH-01
+**Depends on:** Phase 1
+**Plans:** 1 plan
+
+Plans:
+- [x] 01.2-01: Create subscription plans on landing page.
 
 ### Phase 1.1: Platform Scaffolding
 **Goal**: Build the core site structure (Landing, Admin, Proposals, Vote, Dashboard) with RESTful routing and persistent mock data via Zustand.

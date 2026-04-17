@@ -1,0 +1,25 @@
+# Dependencies & Build Artifacts
+node_modules/
+.next/
+dist/
+out/
+build/
+
+# Package Manager Noise
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environmental Secrets
+.env*
+!.env.example
+
+# IDE & OS Noise
+.vscode/
+.idea/
+.DS_Store
+*.log
+tsconfig.tsbuildinfo
+
+# Large Assets (optional)
+# public/assets/
