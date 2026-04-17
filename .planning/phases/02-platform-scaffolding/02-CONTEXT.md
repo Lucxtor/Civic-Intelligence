@@ -37,13 +37,15 @@ This phase does NOT implement ZKP, smart contracts, or on-chain identity — tha
 - User selects one option per dimension from dropdown/select UI.
 - Example dimensions (seeded as defaults): `ageGroup`, `occupation`, `district`.
 
-### D-04: Off-Chain Storage — Supabase
-- **Database**: Supabase (PostgreSQL).
-- **Tables**:
-  - `profiles` — columns: `wallet_address` (text, PK), `demographics` (jsonb), `created_at`.
-  - `demographic_dimensions` — columns: `id`, `key`, `label`, `options` (jsonb array), `created_at`.
-- **Auth**: No Supabase Auth — wallet address is the identifier. Use Supabase anon key for client-side reads. Use `service_role` key server-side for writes via API routes.
-- **Privacy**: The `profiles` table maps `wallet_address → demographics`. At vote submission time, the backend (Next.js API route) fetches demographics by address and sends ONLY the demographics to the analytics store. The wallet address is never written alongside votes.
+### D-04: Off-Chain Storage — Prisma + SQLite
+- **ORM**: Prisma with SQLite provider (`prisma/dev.db`). Zero external dependencies.
+- **Models**:
+  - `User` — `walletAddress` (String, @id), `demographics` (String/JSON), `createdAt`.
+  - `DemographicDimension` — `id`, `key` (@unique), `label`, `options` (String/JSON array), `createdAt`.
+  - `AnonymizedVote` — `id`, `proposalId`, `demographics` (String/JSON), `responses` (String/JSON), `createdAt`. **No walletAddress field.**
+- **Client**: Singleton pattern in `src/lib/db.ts` to prevent hot-reload connection leaks.
+- **Seeding**: `prisma/seed.ts` pre-populates default dimensions (Age Group, Occupation, District).
+- **Privacy**: The `User` table maps `walletAddress → demographics`. At vote submission time, the Next.js API route (`/api/vote`) fetches demographics by address server-side and writes ONLY demographics to `AnonymizedVote`. The wallet address is never written alongside votes.
 
 ### D-05: Vote Submission Pipeline (Privacy Layer)
 - When a user submits a vote:
@@ -66,12 +68,13 @@ This phase does NOT implement ZKP, smart contracts, or on-chain identity — tha
 - On wallet connect: fetch profile, set store. On wallet disconnect: clear store.
 
 ### D-08: Environment & Config
-- Required env vars:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY` (server-only, for API routes)
-- Create `.env.local.example` documenting all required vars.
-- Install `@supabase/supabase-js`.
+- No secret keys required — SQLite database is local (`prisma/dev.db`).
+- Add `prisma/dev.db` and `prisma/dev.db-journal` to `.gitignore`.
+- Required dev setup steps:
+  1. `npm install @prisma/client && npm install -D prisma ts-node`
+  2. `npx prisma db push` — creates the local SQLite database and tables.
+  3. `npx prisma db seed` — populates default demographic dimensions.
+- Create `.env.local.example` documenting the WalletConnect project ID (the only remote key we use).
 
 ### D-09: Recharts Dashboard Warning (Existing Bug)
 - The browser console shows repeated `width(-1) and height(-1)` errors from recharts on the `/proposals/[id]/dashboard` page.
