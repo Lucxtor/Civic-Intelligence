@@ -7,6 +7,8 @@ import Link from "next/link";
 
 import { GlobalNav } from "@/components/layout/GlobalNav";
 
+import { OnboardingModal } from "@/components/auth/OnboardingModal";
+
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
@@ -34,6 +36,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Web3Provider>
+          <OnboardingModal />
           <header className="w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-14 items-center justify-between px-4">
               <Link href="/" className="font-heading font-bold text-xl tracking-tight text-foreground hover:opacity-80 transition-opacity">
