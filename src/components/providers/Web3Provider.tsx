@@ -21,6 +21,12 @@ import {
 } from "@tanstack/react-query";
 
 import '@rainbow-me/rainbowkit/styles.css';
+import { useWalletProfile } from '@/hooks/useWalletProfile';
+
+function ProfileWatcher() {
+  useWalletProfile();
+  return null;
+}
 
 const config = getDefaultConfig({
   appName: 'Ipê Civic Intelligence',
@@ -44,6 +50,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
             overlayBlur: 'small',
           })}
         >
+          <ProfileWatcher />
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
