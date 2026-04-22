@@ -3,8 +3,9 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Proposal } from '@/types';
+import { useMockStore } from '@/store/useMockStore';
 import { MotionBentoCard } from '@/components/motion/MotionBentoCard';
-import { Activity, Leaf, Briefcase, Users, LayoutDashboard } from 'lucide-react';
+import { Activity, Leaf, Briefcase, Users, LayoutDashboard, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 const categoryConfig = {
   Infrastructure: { color: 'text-ipe-magenta', bg: 'bg-ipe-magenta/10', icon: Briefcase },
@@ -15,6 +16,10 @@ const categoryConfig = {
 
 export function ProposalCard({ proposal, index }: { proposal: Proposal, index: number }) {
   const router = useRouter();
+  const votes = useMockStore((state) => state.votes[proposal.id] || []);
+  
+  const upVotes = votes.filter(v => v.sentiment === 'up').length;
+  const downVotes = votes.filter(v => v.sentiment === 'down').length;
   
   const catConf = categoryConfig[proposal.category || 'Social'];
   const Icon = catConf?.icon || Users;
@@ -56,9 +61,20 @@ export function ProposalCard({ proposal, index }: { proposal: Proposal, index: n
         </p>
       </div>
 
-      <div className="mt-6 pt-4 border-t border-border/50 flex align-center justify-between text-xs text-muted-foreground">
-        <span>{proposal.customMetrics?.length || 0} Metrics</span>
-        <span>{new Date(proposal.createdAt).toLocaleDateString()}</span>
+      <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] uppercase tracking-wider font-bold">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 text-ipe-green">
+            <ThumbsUp className="w-3 h-3" />
+            <span>{upVotes}</span>
+          </div>
+          <div className="flex items-center gap-1 text-ipe-magenta">
+            <ThumbsDown className="w-3 h-3" />
+            <span>{downVotes}</span>
+          </div>
+          <div className="h-3 w-[1px] bg-border/50 mx-1" />
+          <span className="text-muted-foreground">{proposal.customMetrics?.length || 0} Nuance Metrics</span>
+        </div>
+        <span className="text-muted-foreground/60">{new Date(proposal.createdAt).toLocaleDateString()}</span>
       </div>
     </MotionBentoCard>
   );

@@ -37,6 +37,7 @@ model AnonymizedVote {
   proposalId   String   @map("proposal_id")
   demographics String   // JSON string: demographic tags only, no wallet
   responses    String   // JSON string: { "fairness": 4, "feasibility": 3, ... }
+  sentiment    String?  // "up" or "down"
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("anonymized_votes")

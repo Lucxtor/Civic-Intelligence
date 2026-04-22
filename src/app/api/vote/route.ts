@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const { walletAddress, proposalId, responses } = await req.json();
+    const { walletAddress, proposalId, responses, sentiment } = await req.json();
 
     if (!walletAddress || !proposalId || !responses) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
         proposalId,
         responses: JSON.stringify(responses),
         demographics: user.demographics,
+        sentiment,
       },
     });
 

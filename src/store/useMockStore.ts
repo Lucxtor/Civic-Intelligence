@@ -81,7 +81,8 @@ const INITIAL_VOTES: Record<string, UserVote[]> = {
       proposalId: 'prop-1',
       voterId: '0xMockDemoVoter',
       demographics: { age: 30, location: 'Centro' },
-      responses: {} // Mock responses
+      responses: {}, // Mock responses
+      sentiment: 'up'
     }
   ],
   'prop-2': [
@@ -89,7 +90,8 @@ const INITIAL_VOTES: Record<string, UserVote[]> = {
       proposalId: 'prop-2',
       voterId: '0xMockDemoVoter2',
       demographics: { age: 45, location: 'Trindade' },
-      responses: {}
+      responses: {},
+      sentiment: 'down'
     }
   ]
 };
@@ -114,7 +116,7 @@ export const useMockStore = create<MockStore>()(
       resetStore: () => set({ proposals: INITIAL_PROPOSALS, votes: INITIAL_VOTES })
     }),
     {
-      name: 'civic-intelligence-storage-v4', // Updated version to trigger mock votes cascade
+      name: 'civic-intelligence-storage-v5', // Updated version to trigger mock votes cascade
     }
   )
 );

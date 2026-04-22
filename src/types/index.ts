@@ -35,5 +35,6 @@ export interface UserVote {
     location?: string;
   };
   responses: Record<string, number>; // metricId -> value (0-100)
+  sentiment: 'up' | 'down' | null;
   comment?: string;
 }
