@@ -6,8 +6,6 @@ import { useAccount } from 'wagmi';
 import { useMockStore } from '@/store/useMockStore';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
-
 const LIKERT_OPTIONS = [
   { value: 1, label: 'Strongly Disagree' },
   { value: 2, label: 'Disagree' },
@@ -26,7 +24,6 @@ export default function NuanceVotePage() {
   const id = params.id as string;
   const proposal = proposals.find(p => p.id === id);
 
-  const [sentiment, setSentiment] = useState<'up' | 'down' | null>(null);
   const [responses, setResponses] = useState<Record<string, number>>({});
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,10 +36,6 @@ export default function NuanceVotePage() {
 
   const handleVoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sentiment) {
-      alert("Please select a general sentiment (Up or Down) first.");
-      return;
-    }
     setIsSubmitting(true);
     
     // Ensure all metrics have been answered
@@ -61,7 +54,6 @@ export default function NuanceVotePage() {
           walletAddress: address,
           proposalId: proposal.id,
           responses,
-          sentiment,
         })
       });
 
@@ -75,7 +67,6 @@ export default function NuanceVotePage() {
         voterId: 'anonymous_voter', // Privacy
         demographics: { age: 32, location: 'Centro' }, // Fallback mock structure
         responses,
-        sentiment,
         comment: comment.trim() !== '' ? comment : undefined
       });
 
@@ -98,27 +89,6 @@ export default function NuanceVotePage() {
 
         <form onSubmit={handleVoteSubmit} className="space-y-10">
           
-          <div className="glass-panel p-8 rounded-xl border-ipe-green/20 border text-center">
-            <h3 className="text-xl font-heading font-bold mb-6">In principle, do you support this proposal?</h3>
-            <div className="flex justify-center gap-6">
-              <button
-                type="button"
-                onClick={() => setSentiment('up')}
-                className={`flex flex-col items-center gap-3 px-10 py-6 rounded-2xl transition-all ${sentiment === 'up' ? 'bg-ipe-green text-black scale-105 shadow-lg shadow-ipe-green/20' : 'bg-white/5 border border-white/10 text-muted-foreground hover:text-foreground'}`}
-              >
-                <ThumbsUp className="w-8 h-8" />
-                <span className="font-bold">UPVOTE</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSentiment('down')}
-                className={`flex flex-col items-center gap-3 px-10 py-6 rounded-2xl transition-all ${sentiment === 'down' ? 'bg-ipe-magenta text-black scale-105 shadow-lg shadow-ipe-magenta/20' : 'bg-white/5 border border-white/10 text-muted-foreground hover:text-foreground'}`}
-              >
-                <ThumbsDown className="w-8 h-8" />
-                <span className="font-bold">DOWNVOTE</span>
-              </button>
-            </div>
-          </div>
           {proposal.customMetrics.map((metric) => (
             <div key={metric.id} className="glass-panel p-8 rounded-xl space-y-6">
               <div>

@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Proposal, UserVote } from '@/types';
+import { Proposal, UserVote, RelevanceVote } from '@/types';
 
 interface MockStore {
   proposals: Proposal[];
-  votes: Record<string, UserVote[]>; // Updated to support multiple votes per proposal
+  votes: Record<string, UserVote[]>;
+  relevanceVotes: Record<string, Record<string, 'up' | 'down'>>; // proposalId -> voterId -> type
   addProposal: (proposal: Proposal) => void;
   setVote: (proposalId: string, voteData: UserVote) => void;
+  toggleRelevance: (proposalId: string, voterId: string, type: 'up' | 'down') => void;
   resetStore: () => void;
 }
 
@@ -96,15 +98,22 @@ const INITIAL_VOTES: Record<string, UserVote[]> = {
   ]
 };
 
+const INITIAL_RELEVANCE: Record<string, Record<string, 'up' | 'down'>> = {
+  'prop-1': { '0xMockDemoVoter': 'up' },
+  'prop-2': { '0xMockDemoVoter2': 'down' }
+};
+
 export const useMockStore = create<MockStore>()(
   persist(
     (set) => ({
       proposals: INITIAL_PROPOSALS,
       votes: INITIAL_VOTES,
+      relevanceVotes: INITIAL_RELEVANCE,
       addProposal: (proposal) => 
         set((state) => ({ 
           proposals: [proposal, ...state.proposals],
-          votes: { ...state.votes, [proposal.id]: [] }
+          votes: { ...state.votes, [proposal.id]: [] },
+          relevanceVotes: { ...state.relevanceVotes, [proposal.id]: {} }
         })),
       setVote: (proposalId, voteData) => 
         set((state) => ({
@@ -113,10 +122,29 @@ export const useMockStore = create<MockStore>()(
             [proposalId]: [...(state.votes[proposalId] || []), voteData]
           }
         })),
-      resetStore: () => set({ proposals: INITIAL_PROPOSALS, votes: INITIAL_VOTES })
+      toggleRelevance: (proposalId, voterId, type) =>
+        set((state) => {
+          const currentVotes = { ...(state.relevanceVotes[proposalId] || {}) };
+          
+          if (currentVotes[voterId] === type) {
+            // Remove vote if clicking same arrow
+            delete currentVotes[voterId];
+          } else {
+            // Set or Toggle vote
+            currentVotes[voterId] = type;
+          }
+
+          return {
+            relevanceVotes: {
+              ...state.relevanceVotes,
+              [proposalId]: currentVotes
+            }
+          };
+        }),
+      resetStore: () => set({ proposals: INITIAL_PROPOSALS, votes: INITIAL_VOTES, relevanceVotes: INITIAL_RELEVANCE })
     }),
     {
-      name: 'civic-intelligence-storage-v5', // Updated version to trigger mock votes cascade
+      name: 'civic-intelligence-storage-v6', // Updated version for relevance structure
     }
   )
 );

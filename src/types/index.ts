@@ -35,6 +35,12 @@ export interface UserVote {
     location?: string;
   };
   responses: Record<string, number>; // metricId -> value (0-100)
-  sentiment: 'up' | 'down' | null;
+  sentiment?: 'up' | 'down' | null; // Optional: specific to nuance context
   comment?: string;
+}
+
+export interface RelevanceVote {
+  proposalId: string;
+  voterId: string;
+  type: 'up' | 'down';
 }

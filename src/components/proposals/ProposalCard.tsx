@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Proposal } from '@/types';
 import { useMockStore } from '@/store/useMockStore';
 import { MotionBentoCard } from '@/components/motion/MotionBentoCard';
-import { Activity, Leaf, Briefcase, Users, LayoutDashboard, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Activity, Leaf, Briefcase, Users, LayoutDashboard, ChevronUp, ChevronDown } from 'lucide-react';
+import { useAccount } from 'wagmi';
 
 const categoryConfig = {
   Infrastructure: { color: 'text-ipe-magenta', bg: 'bg-ipe-magenta/10', icon: Briefcase },
@@ -16,10 +17,14 @@ const categoryConfig = {
 
 export function ProposalCard({ proposal, index }: { proposal: Proposal, index: number }) {
   const router = useRouter();
-  const votes = useMockStore((state) => state.votes[proposal.id] || []);
+  const { address } = useAccount();
+  const relevanceVotes = useMockStore((state) => state.relevanceVotes[proposal.id] || {});
+  const toggleRelevance = useMockStore((state) => state.toggleRelevance);
   
-  const upVotes = votes.filter(v => v.sentiment === 'up').length;
-  const downVotes = votes.filter(v => v.sentiment === 'down').length;
+  const upVotes = Object.values(relevanceVotes).filter(v => v === 'up').length;
+  const downVotes = Object.values(relevanceVotes).filter(v => v === 'down').length;
+  const score = upVotes - downVotes;
+  const userVote = address ? relevanceVotes[address] : null;
   
   const catConf = categoryConfig[proposal.category || 'Social'];
   const Icon = catConf?.icon || Users;
@@ -31,50 +36,65 @@ export function ProposalCard({ proposal, index }: { proposal: Proposal, index: n
   return (
     <MotionBentoCard 
       delay={index * 0.1}
-      className="group cursor-pointer flex flex-col justify-between h-full relative"
-      onClick={() => router.push(`/proposals/${proposal.id}`)}
+      className="group flex flex-row gap-4 h-full relative p-0 overflow-hidden"
     >
-      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-         <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
-           <LayoutDashboard className="w-3 h-3" />
-           Click to Deep Dive
-         </span>
+      {/* Relevance Sidebar */}
+      <div className="flex flex-col items-center justify-start pt-6 pb-4 px-3 bg-white/5 border-r border-white/5 gap-2 min-w-[50px]">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!address) return alert('Please connect your wallet to vote on relevance.');
+            toggleRelevance(proposal.id, address, 'up');
+          }}
+          className={`p-1 rounded-md transition-colors ${userVote === 'up' ? 'bg-ipe-green text-black' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'}`}
+        >
+          <ChevronUp className="w-6 h-6" />
+        </button>
+        <span className={`text-sm font-mono font-bold ${score > 0 ? 'text-ipe-green' : score < 0 ? 'text-ipe-magenta' : 'text-muted-foreground'}`}>
+          {score > 0 ? `+${score}` : score}
+        </span>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!address) return alert('Please connect your wallet to vote on relevance.');
+            toggleRelevance(proposal.id, address, 'down');
+          }}
+          className={`p-1 rounded-md transition-colors ${userVote === 'down' ? 'bg-ipe-magenta text-black' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'}`}
+        >
+          <ChevronDown className="w-6 h-6" />
+        </button>
       </div>
 
-      <div>
-        <div className="flex items-start justify-between mb-4">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${catConf.bg} ${catConf.color}`}>
-            <Icon className="w-3.5 h-3.5" />
-            {proposal.category}
-          </span>
-          <span className={`text-xs font-bold uppercase tracking-widest ${impactLevel === 'High Risk' ? 'text-ipe-magenta' : 'text-ipe-green'}`}>
-            {impactLevel}
-          </span>
+      <div 
+        className="flex-1 flex flex-col justify-between py-6 pr-6 cursor-pointer"
+        onClick={() => router.push(`/proposals/${proposal.id}`)}
+      >
+        <div>
+          <div className="flex items-start justify-between mb-4">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${catConf.bg} ${catConf.color}`}>
+              <Icon className="w-3.5 h-3.5" />
+              {proposal.category}
+            </span>
+            <span className={`text-xs font-bold uppercase tracking-widest ${impactLevel === 'High Risk' ? 'text-ipe-magenta' : 'text-ipe-green'}`}>
+              {impactLevel}
+            </span>
+          </div>
+          
+          <h3 className="text-xl font-heading font-bold mb-3 group-hover:text-ipe-yellow transition-colors">
+            {proposal.title}
+          </h3>
+          
+          <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed">
+            {proposal.abstract.eli5}
+          </p>
         </div>
-        
-        <h3 className="text-xl font-heading font-bold mb-3 group-hover:text-ipe-yellow transition-colors">
-          {proposal.title}
-        </h3>
-        
-        <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
-          {proposal.abstract.eli5}
-        </p>
-      </div>
 
-      <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] uppercase tracking-wider font-bold">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-ipe-green">
-            <ThumbsUp className="w-3 h-3" />
-            <span>{upVotes}</span>
+        <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] uppercase tracking-wider font-bold">
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground">{proposal.customMetrics?.length || 0} Nuance Metrics</span>
           </div>
-          <div className="flex items-center gap-1 text-ipe-magenta">
-            <ThumbsDown className="w-3 h-3" />
-            <span>{downVotes}</span>
-          </div>
-          <div className="h-3 w-[1px] bg-border/50 mx-1" />
-          <span className="text-muted-foreground">{proposal.customMetrics?.length || 0} Nuance Metrics</span>
+          <span className="text-muted-foreground/60">{new Date(proposal.createdAt).toLocaleDateString()}</span>
         </div>
-        <span className="text-muted-foreground/60">{new Date(proposal.createdAt).toLocaleDateString()}</span>
       </div>
     </MotionBentoCard>
   );
