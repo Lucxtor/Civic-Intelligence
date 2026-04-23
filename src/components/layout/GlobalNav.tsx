@@ -22,6 +22,8 @@ export function GlobalNav() {
     const p = proposals.find(pr => pr.id === proposalId);
     if (p) activeTitle = p.title;
     else if (proposalId !== 'new') activeTitle = 'Proposal Profile';
+  } else if (segments[0] === 'admin' && segments[1] === 'analytics') {
+     activeTitle = 'Civic Telemetry Hub';
   } else if (segments[0] === 'admin') {
      activeTitle = 'Proposal Forge';
   }
