@@ -14,19 +14,38 @@ const LIKERT_OPTIONS = [
   { value: 5, label: 'Strongly Agree' }
 ];
 
-export default function NuanceVotePage() {
-  const params = useParams();
+export default function NuanceVotePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const router = useRouter();
   const { address } = useAccount();
-  const setVote = useMockStore((state) => state.setVote);
-  const proposals = useMockStore((state) => state.proposals);
   
-  const id = params.id as string;
-  const proposal = proposals.find(p => p.id === id);
+  const [proposal, setProposal] = React.useState<Proposal | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [responses, setResponses] = React.useState<Record<string, number>>({});
+  const [comment, setComment] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const [responses, setResponses] = useState<Record<string, number>>({});
-  const [comment, setComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  React.useEffect(() => {
+    const fetchProposal = async () => {
+      try {
+        const res = await fetch(`/api/proposals/${id}`);
+        if (res.ok) setProposal(await res.json());
+      } catch (err) {
+        console.error('Failed to load proposal:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProposal();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-40">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ipe-green"></div>
+      </div>
+    );
+  }
 
   if (!proposal) return null;
 
@@ -60,15 +79,6 @@ export default function NuanceVotePage() {
       if (!res.ok) {
         throw new Error('Failed to submit vote. Ensure your civic context is registered.');
       }
-
-      // Sync to mock store for backwards compatibility with front-end dashboards in Phase 1
-      setVote(proposal.id, {
-        proposalId: proposal.id,
-        voterId: 'anonymous_voter', // Privacy
-        demographics: { age: 32, location: 'Centro' }, // Fallback mock structure
-        responses,
-        comment: comment.trim() !== '' ? comment : undefined
-      });
 
       router.push(`/proposals/${proposal.id}/dashboard`);
     } catch (error: any) {

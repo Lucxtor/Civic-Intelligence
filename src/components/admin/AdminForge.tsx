@@ -14,6 +14,7 @@ interface ForgeFormValues {
   eli5Abstract: string;
   content: string;
   allowComments: boolean;
+  impact: 'Low' | 'Medium' | 'High';
   beneficiaries: { tag: string; estimate: number }[];
   negativeImpacts: { tag: string; risk: string }[];
   financials: { totalCost: number; currency: string; roiConfidence: number };
@@ -24,9 +25,10 @@ export function AdminForge() {
   const addProposal = useMockStore((state) => state.addProposal);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, control, handleSubmit, watch } = useForm<ForgeFormValues>({
+  const { register, control, handleSubmit, watch, reset } = useForm<ForgeFormValues>({
     defaultValues: {
       category: 'Social',
+      impact: 'Medium',
       allowComments: true,
       beneficiaries: [{ tag: 'General Public', estimate: 100 }],
       negativeImpacts: [],
@@ -39,35 +41,67 @@ export function AdminForge() {
   const { fields: riskFields, append: appendRisk, remove: removeRisk } = useFieldArray({ control, name: 'negativeImpacts' });
   const { fields: metricFields, append: appendMetric, remove: removeMetric } = useFieldArray({ control, name: 'customMetrics' });
 
+  const [categories, setCategories] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const watchData = watch();
 
   const onSubmit = async (data: ForgeFormValues) => {
     setIsSubmitting(true);
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 600));
+    try {
+      const payload = {
+        title: data.title,
+        category: data.category,
+        abstract: {
+          technical: data.technicalAbstract,
+          eli5: data.eli5Abstract
+        },
+        content: data.content,
+        impactMatrix: {
+          beneficiaries: data.beneficiaries,
+          negativeImpacts: data.negativeImpacts,
+          financials: data.financials
+        },
+        impact: data.impact,
+        customMetrics: data.customMetrics,
+        allowComments: data.allowComments
+      };
 
-    addProposal({
-      id: `prop-${Date.now()}`,
-      title: data.title,
-      category: data.category,
-      abstract: {
-        technical: data.technicalAbstract,
-        eli5: data.eli5Abstract
-      },
-      content: data.content,
-      impactMatrix: {
-        beneficiaries: data.beneficiaries,
-        negativeImpacts: data.negativeImpacts.map(r => ({ tag: r.tag, risk: r.risk as RiskLevel })),
-        financials: data.financials
-      },
-      customMetrics: data.customMetrics.map((m, i) => ({ id: `metric-${i}`, label: m.label, description: m.description })),
-      allowComments: data.allowComments,
-      createdAt: new Date().toISOString()
-    });
+      const res = await fetch('/api/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    setIsSubmitting(false);
-    alert('Proposal forged successfully!');
-    // Redirect or reset could go here
+      if (res.ok) {
+        const newProposal = await res.json();
+        // Clear local storage for consistency so they don't see double content if using mixed sources
+        addProposal(newProposal); 
+        alert('Proposal forged successfully!');
+        reset();
+      } else {
+        throw new Error('Failed to forge proposal');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error forging proposal');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Derive radar data from form state
@@ -100,10 +134,17 @@ export function AdminForge() {
               <div>
                 <label className="block text-sm font-medium mb-1">Category</label>
                 <select {...register("category")} className="w-full bg-background/50 border border-border rounded-md px-3 py-2 text-foreground">
-                  <option value="Infrastructure">Infrastructure</option>
-                  <option value="Environmental">Environmental</option>
-                  <option value="Economic">Economic</option>
-                  <option value="Social">Social</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Impact Level</label>
+                <select {...register("impact")} className="w-full bg-background/50 border border-border rounded-md px-3 py-2 text-foreground">
+                  <option value="Low">Low Impact</option>
+                  <option value="Medium">Medium Impact</option>
+                  <option value="High">High Impact</option>
                 </select>
               </div>
             </div>

@@ -6,21 +6,43 @@ import { useMockStore } from '@/store/useMockStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ExternalLink, BarChart3, ShieldCheck } from 'lucide-react';
 
-export default function ProposalDetailView() {
-  const params = useParams();
+export default function ProposalDetailView({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const router = useRouter();
-  const proposals = useMockStore((state) => state.proposals);
   
-  const id = params.id as string;
-  const proposal = proposals.find(p => p.id === id);
+  const [proposal, setProposal] = React.useState<Proposal | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState<'eli5' | 'tech'>('eli5');
 
-  const [activeTab, setActiveTab] = useState<'eli5' | 'tech'>('eli5');
+  React.useEffect(() => {
+    const fetchProposal = async () => {
+      try {
+        const res = await fetch(`/api/proposals/${id}`);
+        if (res.ok) setProposal(await res.json());
+      } catch (err) {
+        console.error('Failed to load proposal:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProposal();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-40">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ipe-green"></div>
+      </div>
+    );
+  }
 
   if (!proposal) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-3xl font-heading text-destructive mb-4">404: Proposal Not Found</h1>
-        <button onClick={() => router.push('/proposals')} className="text-ipe-green underline">Return to Discovery</button>
+        <button onClick={() => router.push('/proposals')} className="text-ipe-green underline transition-opacity hover:opacity-80">
+          Return to Discovery
+        </button>
       </div>
     );
   }

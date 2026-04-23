@@ -10,63 +10,62 @@ import {
 } from 'recharts';
 import { ArrowLeft, Users, CheckCircle2, MapPin, Activity } from 'lucide-react';
 
-export default function CivicPulseDashboard() {
-  const params = useParams();
+export default function CivicPulseDashboard({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const router = useRouter();
-  const proposals = useMockStore((state) => state.proposals);
-  const votes = useMockStore((state) => state.votes); 
   
-  const id = params.id as string;
-  const proposal = proposals.find(p => p.id === id);
-  // It's an array now
-  const proposalVotes = votes[id] || [];
-  const hasVotes = proposalVotes.length > 0;
-
-  const [isMounted, setIsMounted] = React.useState(false);
+  const [data, setData] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!proposal || !isMounted) return null;
-
-  // Placeholder Data for Recharts Initialization Shell
-  const pieData = [
-    { name: 'Strongly Agree', value: hasVotes ? 40 : 0 },
-    { name: 'Agree', value: hasVotes ? 30 : 0 },
-    { name: 'Neutral', value: hasVotes ? 10 : 0 },
-    { name: 'Disagree', value: hasVotes ? 15 : 0 },
-    { name: 'Strongly Disagree', value: hasVotes ? 5 : 0 },
-  ];
-  const COLORS = ['#00FF66', '#a1fda1', '#888888', '#fa8686', '#FF0055'];
-
-  const barData = [
-    { ageGroup: '18-24', participation: hasVotes ? 120 : 0 },
-    { ageGroup: '25-34', participation: hasVotes ? 350 : 0 },
-    { ageGroup: '35-44', participation: hasVotes ? 200 : 0 },
-    { ageGroup: '45-54', participation: hasVotes ? 90 : 0 },
-    { ageGroup: '55+', participation: hasVotes ? 40 : 0 },
-  ];
-
-  const locationData = [
-    { district: 'Centro', participation: hasVotes ? 500 : 0 },
-    { district: 'Trindade', participation: hasVotes ? 450 : 0 },
-    { district: 'Lagoa', participation: hasVotes ? 320 : 0 },
-    { district: 'Campeche', participation: hasVotes ? 400 : 0 },
-    { district: 'Continente', participation: hasVotes ? 170 : 0 },
-  ];
-
-  const radarData = proposal.customMetrics.map((metric, i) => {
-    const val = hasVotes ? (i === 0 ? 85 : 45 + (i * 10)) : 0;
-    return {
-      subject: metric.label,
-      A: val,
-      fullMark: 100,
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`/api/proposals/${id}/stats`);
+        if (res.ok) setData(await res.json());
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  });
+    fetchStats();
+  }, [id]);
 
-  // Calculate generic total based on mock or state
-  const totalParticipants = hasVotes ? '1,840' : '0';
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-40">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ipe-green"></div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { proposal, stats } = data;
+  const hasVotes = stats.totalParticipants > 0;
+
+  // Real Data mapping
+  const pieData = [
+    { name: 'Up Votes', value: stats.sentimentDist.up },
+    { name: 'Down Votes', value: stats.sentimentDist.down },
+    { name: 'Nuance Only', value: stats.sentimentDist.none },
+  ];
+  const COLORS = ['#00FF66', '#FF0055', '#888888'];
+
+  const barData = stats.ageData.map((d: any) => ({
+    ageGroup: d.group,
+    participation: d.count
+  }));
+
+  const locationData = stats.locationData;
+
+  const radarData = stats.radarData.map((d: any) => ({
+    subject: d.subject,
+    A: d.value,
+    fullMark: 100,
+  }));
+
+  const totalParticipants = stats.totalParticipants.toLocaleString();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -201,21 +200,20 @@ export default function CivicPulseDashboard() {
           <div className="glass-panel p-6 rounded-2xl lg:col-span-2">
              <h3 className="font-heading text-lg font-bold mb-6">Nuance Facets Breakdown Detail</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-               {proposal.customMetrics.map((metric, i) => {
-                 // For scaffold demo, if it's the first metric, show high approval, else show mixed.
-                 const val = i === 0 ? 85 : 45 + (i * 10);
-                 return (
-                   <div key={metric.id} className="bg-background/40 border border-border/50 p-4 rounded-xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium text-sm">{metric.label}</span>
-                        <span className={`font-mono text-xs ${val > 60 ? 'text-ipe-green' : 'text-ipe-yellow'}`}>{val}% Consensus</span>
-                      </div>
-                      <div className="w-full bg-background rounded-full h-2 overflow-hidden border border-border/50">
-                        <div className={`h-full ${val > 60 ? 'bg-ipe-green' : 'bg-ipe-yellow'}`} style={{ width: `${val}%` }} />
-                      </div>
-                   </div>
-                 );
-               })}
+                {stats.radarData.map((metric: any) => {
+                  const val = metric.value;
+                  return (
+                    <div key={metric.subject} className="bg-background/40 border border-border/50 p-4 rounded-xl">
+                       <div className="flex justify-between items-center mb-2">
+                         <span className="font-medium text-sm">{metric.subject}</span>
+                         <span className={`font-mono text-xs ${val > 60 ? 'text-ipe-green' : 'text-ipe-yellow'}`}>{val}% Consensus</span>
+                       </div>
+                       <div className="w-full bg-background rounded-full h-2 overflow-hidden border border-border/50">
+                         <div className={`h-full ${val > 60 ? 'bg-ipe-green' : 'bg-ipe-yellow'}`} style={{ width: `${val}%` }} />
+                       </div>
+                    </div>
+                  );
+                })}
              </div>
           </div>
 

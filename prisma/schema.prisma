@@ -35,10 +35,39 @@ model DemographicDimension {
 model AnonymizedVote {
   id           String   @id @default(cuid())
   proposalId   String   @map("proposal_id")
-  demographics String   // JSON string: demographic tags only, no wallet
+  proposal     Proposal @relation(fields: [proposalId], references: [id])
+  voterHash    String?  @map("voter_hash") // sha256(wallet_address + proposal_id + salt)
+  demographics String   // JSON string: demographic tags only
   responses    String   // JSON string: { "fairness": 4, "feasibility": 3, ... }
   sentiment    String?  // "up" or "down"
   createdAt    DateTime @default(now()) @map("created_at")
 
+  @@unique([proposalId, voterHash]) // Prevent double voting if hash is provided
   @@map("anonymized_votes")
+}
+
+/// A civic proposal created by admins.
+model Proposal {
+  id             String           @id @default(cuid())
+  title          String
+  category       String
+  abstract       String           // JSON string: { technical: string, eli5: string }
+  content        String           // Markdown
+  impactMatrix   String           // JSON string: ImpactMatrix interface
+  impact         String           @default("Medium")
+  customMetrics  String           // JSON string: Array of metric objects
+  allowComments  Boolean          @default(true)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  votes          AnonymizedVote[]
+
+  @@map("proposals")
+}
+
+/// Proposal categories managed by admins.
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("categories")
 }

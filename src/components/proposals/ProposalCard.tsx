@@ -18,20 +18,69 @@ const categoryConfig = {
 export function ProposalCard({ proposal, index }: { proposal: Proposal, index: number }) {
   const router = useRouter();
   const { address } = useAccount();
-  const relevanceVotes = useMockStore((state) => state.relevanceVotes[proposal.id] || {});
-  const toggleRelevance = useMockStore((state) => state.toggleRelevance);
+  const localVote = useMockStore((state) => state.relevanceVotes[proposal.id]?.[address || ''] || null);
+  const setLocalVote = useMockStore((state) => state.toggleRelevance);
   
-  const upVotes = Object.values(relevanceVotes).filter(v => v === 'up').length;
-  const downVotes = Object.values(relevanceVotes).filter(v => v === 'down').length;
-  const score = upVotes - downVotes;
-  const userVote = address ? relevanceVotes[address] : null;
-  
-  const catConf = categoryConfig[proposal.category || 'Social'];
-  const Icon = catConf?.icon || Users;
+  const [dbVotes, setDbVotes] = React.useState({
+    up: proposal.upVotes || 0,
+    down: proposal.downVotes || 0,
+    score: proposal.netSentiment || 0
+  });
 
-  // Derive simple impact level metric for the card
-  const severeRisks = proposal.impactMatrix?.negativeImpacts.filter(r => r.risk === 'Severe').length || 0;
-  const impactLevel = severeRisks > 0 ? 'High Risk' : 'Standard';
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!address) return alert('Please connect your wallet to vote.');
+    
+    // Toggle logic
+    const newSentiment = localVote === type ? null : type;
+    
+    // 1. Optimistic UI in Store
+    setLocalVote(proposal.id, address, type);
+    
+    // 2. Optimistic UI in Component
+    setDbVotes(prev => {
+      let up = prev.up;
+      let down = prev.down;
+      
+      // Remove old vote
+      if (localVote === 'up') up--;
+      if (localVote === 'down') down--;
+      
+      // Add new vote
+      if (newSentiment === 'up') up++;
+      if (newSentiment === 'down') down++;
+      
+      return { up, down, score: up - down };
+    });
+
+    try {
+      await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalId: proposal.id,
+          walletAddress: address,
+          sentiment: newSentiment
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync vote to DB:', err);
+    }
+  };
+
+  const score = dbVotes.score;
+  const userVote = localVote;
+  
+  const catKey = (proposal.category in categoryConfig ? proposal.category : 'Social') as keyof typeof categoryConfig;
+  const catConf = categoryConfig[catKey];
+  const Icon = catConf.icon;
+
+  const impactLevel = proposal.impact || 'Medium';
+
+  const impactColors = {
+    Low: 'text-blue-400',
+    Medium: 'text-ipe-green',
+    High: 'text-ipe-yellow',
+  };
 
   return (
     <MotionBentoCard 
@@ -44,7 +93,7 @@ export function ProposalCard({ proposal, index }: { proposal: Proposal, index: n
           onClick={(e) => {
             e.stopPropagation();
             if (!address) return alert('Please connect your wallet to vote on relevance.');
-            toggleRelevance(proposal.id, address, 'up');
+            handleVote('up');
           }}
           className={`p-1 rounded-md transition-colors ${userVote === 'up' ? 'bg-ipe-green text-black' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'}`}
         >
@@ -57,7 +106,7 @@ export function ProposalCard({ proposal, index }: { proposal: Proposal, index: n
           onClick={(e) => {
             e.stopPropagation();
             if (!address) return alert('Please connect your wallet to vote on relevance.');
-            toggleRelevance(proposal.id, address, 'down');
+            handleVote('down');
           }}
           className={`p-1 rounded-md transition-colors ${userVote === 'down' ? 'bg-ipe-magenta text-black' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'}`}
         >
@@ -75,8 +124,8 @@ export function ProposalCard({ proposal, index }: { proposal: Proposal, index: n
               <Icon className="w-3.5 h-3.5" />
               {proposal.category}
             </span>
-            <span className={`text-xs font-bold uppercase tracking-widest ${impactLevel === 'High Risk' ? 'text-ipe-magenta' : 'text-ipe-green'}`}>
-              {impactLevel}
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${impactColors[impactLevel as keyof typeof impactColors] || impactColors.Medium}`}>
+              {impactLevel} Impact
             </span>
           </div>
           
@@ -93,7 +142,9 @@ export function ProposalCard({ proposal, index }: { proposal: Proposal, index: n
           <div className="flex items-center gap-3">
             <span className="text-muted-foreground">{proposal.customMetrics?.length || 0} Nuance Metrics</span>
           </div>
-          <span className="text-muted-foreground/60">{new Date(proposal.createdAt).toLocaleDateString()}</span>
+          <span className="text-muted-foreground/60" suppressHydrationWarning>
+            {new Date(proposal.createdAt).toLocaleDateString()}
+          </span>
         </div>
       </div>
     </MotionBentoCard>
