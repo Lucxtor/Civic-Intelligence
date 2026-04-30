@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useMockStore } from '@/store/useMockStore';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { Proposal } from '@/types';
 
 const LIKERT_OPTIONS = [
   { value: 1, label: 'Strongly Disagree' },

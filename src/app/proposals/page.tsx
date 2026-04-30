@@ -4,6 +4,7 @@ import React from 'react';
 import { useMockStore } from '@/store/useMockStore';
 import { ProposalCard } from '@/components/proposals/ProposalCard';
 import { motion } from 'framer-motion';
+import { Proposal } from '@/types';
 
 export default function ProposalsPage() {
   const [proposals, setProposals] = React.useState<Proposal[]>([]);

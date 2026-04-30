@@ -20,12 +20,12 @@ Every citizen has the opportunity to speak their mind and be heard through a nua
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] [Req 1] Project Architecture and Mock Data (Frontend only, Next.js App Router, Tailwind, Shadcn).
-- [ ] [Req 2] User can connect wallet/digital passport via Wagmi and RainbowKit.
-- [ ] [Req 3] User can view proposals featuring an Impact Matrix (Who this helps, Who it negatively impacts, Costs).
-- [ ] [Req 4] User can view AI-simplified ELI5/High-school summaries of complex proposals.
+- [X] [Req 1] Project Architecture and Mock Data (Frontend only, Next.js App Router, Tailwind, Shadcn).
+- [X] [Req 2] User can connect wallet/digital passport via Wagmi and RainbowKit.
+- [X] [Req 3] User can view proposals featuring an Impact Matrix (Who this helps, Who it negatively impacts, Costs).
+- [X] [Req 4] User can view AI-simplified ELI5/High-school summaries of complex proposals.
 - [ ] [Req 5] User can view neutral context and fact-check notes from verified Subject Matter Experts.
-- [ ] [Req 6] User can submit multi-dimensional feedback (rating specific aspects like fairness, feasibility).
+- [X] [Req 6] User can submit multi-dimensional feedback (rating specific aspects like fairness, feasibility).
 - [ ] [Req 7] User can choose from a "Why" matrix of structured reasons when disapproving, with optional text comments.
 - [ ] [Req 8] User can view dynamic dashboard and change their vote during the 1-week polling window.
 - [ ] [Req 9] Dashboard displays Sentiment Heatmaps (approval vs demographics like age, economics, education).

@@ -3,11 +3,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { TopMetrics } from './TopMetrics';
-import { EpistemicRadarChart } from './EpistemicRadarChart';
-import { PsychographicBar } from './PsychographicBar';
 import { LayerTabs } from './LayerTabs';
 import { ActionPlanCard } from './ActionPlanCard';
 import { Radar, Shield } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const EpistemicRadarChart = dynamic(
+  () => import('./EpistemicRadarChart').then((mod) => mod.EpistemicRadarChart),
+  { ssr: false, loading: () => <div className="h-[380px] w-full animate-pulse rounded-2xl bg-white/[0.02] border border-white/[0.06]" /> }
+);
+
+const PsychographicBar = dynamic(
+  () => import('./PsychographicBar').then((mod) => mod.PsychographicBar),
+  { ssr: false, loading: () => <div className="h-[380px] w-full animate-pulse rounded-2xl bg-white/[0.02] border border-white/[0.06]" /> }
+);
 
 export function CivicTelemetryHub() {
   return (

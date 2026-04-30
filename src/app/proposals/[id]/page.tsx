@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMockStore } from '@/store/useMockStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ExternalLink, BarChart3, ShieldCheck } from 'lucide-react';
+import { Proposal } from '@/types';
 
 export default function ProposalDetailView({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
