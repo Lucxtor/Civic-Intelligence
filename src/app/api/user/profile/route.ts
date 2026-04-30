@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     user: user
       ? { ...user, demographics: JSON.parse(user.demographics) }
       : null,
-    dimensions: dimensions.map((d) => ({
+    dimensions: dimensions.map((d: any) => ({
       ...d,
       options: JSON.parse(d.options),
     })),

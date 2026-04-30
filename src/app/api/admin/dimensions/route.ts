@@ -7,7 +7,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const parsed = dimensions.map((d) => ({
+    const parsed = dimensions.map((d: any) => ({
       ...d,
       options: JSON.parse(d.options),
     }));

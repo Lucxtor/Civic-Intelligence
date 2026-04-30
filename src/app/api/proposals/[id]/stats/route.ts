@@ -24,9 +24,9 @@ export async function GET(
     
     // 1. Sentiment Distribution (Up, Down, None)
     const sentimentDist = {
-      up: votes.filter(v => v.sentiment === 'up').length,
-      down: votes.filter(v => v.sentiment === 'down').length,
-      none: votes.filter(v => !v.sentiment).length,
+      up: votes.filter((v: any) => v.sentiment === 'up').length,
+      down: votes.filter((v: any) => v.sentiment === 'down').length,
+      none: votes.filter((v: any) => !v.sentiment).length,
     };
 
     // 2. Demographic Aggregations
@@ -42,7 +42,7 @@ export async function GET(
       metricsAverages[m.id] = { sum: 0, count: 0 };
     });
 
-    votes.forEach(v => {
+    votes.forEach((v: any) => {
       // Age Distribution
       try {
         const demo = JSON.parse(v.demographics);

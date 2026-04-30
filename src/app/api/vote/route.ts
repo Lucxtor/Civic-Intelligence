@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
       select: { sentiment: true, responses: true },
     });
 
-    const upVotes = votes.filter(v => v.sentiment === 'up').length;
-    const downVotes = votes.filter(v => v.sentiment === 'down').length;
+    const upVotes = votes.filter((v: any) => v.sentiment === 'up').length;
+    const downVotes = votes.filter((v: any) => v.sentiment === 'down').length;
 
     return NextResponse.json({
       upVotes,
