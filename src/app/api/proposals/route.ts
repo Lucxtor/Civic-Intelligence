@@ -45,25 +45,47 @@ export async function GET(req: NextRequest) {
       // For now, let's keep recent as fallback
     }
 
-    // Fetch ALL matching proposals to allow accurate sorting on aggregated fields
-    const allProposals = await db.proposal.findMany({
-      where,
-    });
+    // Fetch ALL matching proposals
+    let allProposals: any[] = [];
+    try {
+      allProposals = await db.proposal.findMany({ where });
+    } catch (dbError) {
+      console.warn('⚠️ Database connection failed, falling back to mock data:', dbError);
+    }
+
+    // FALLBACK: If DB is empty or failed, use mock data
+    if (allProposals.length === 0) {
+      const { MOCK_PROPOSALS } = await import('@/lib/mock-data');
+      
+      // Filter mock data locally
+      let filteredMock = MOCK_PROPOSALS;
+      if (category && category !== 'null') filteredMock = filteredMock.filter((p: any) => p.category === category);
+      if (impact && impact !== 'null') filteredMock = filteredMock.filter((p: any) => p.impact === impact);
+      if (search) filteredMock = filteredMock.filter((p: any) => p.title.toLowerCase().includes(search.toLowerCase()));
+
+      return NextResponse.json({
+        proposals: filteredMock,
+        total: filteredMock.length,
+        page: 1,
+        totalPages: 1,
+        source: 'mock'
+      });
+    }
 
     const total = allProposals.length;
 
-    // Fetch vote summaries for ALL matching proposals
-    const proposalIds = allProposals.map(p => p.id);
+    // Fetch vote summaries for matching proposals
+    const proposalIds = allProposals.map((p: any) => p.id);
     const voteAggregates = await db.anonymizedVote.findMany({
       where: { proposalId: { in: proposalIds } },
       select: { proposalId: true, sentiment: true },
     });
 
-    // Map and calculate metrics for sorting
-    let proposalsWithMetrics = allProposals.map((p) => {
-      const pVotes = voteAggregates.filter(v => v.proposalId === p.id);
-      const upVotes = pVotes.filter(v => v.sentiment === 'up').length;
-      const downVotes = pVotes.filter(v => v.sentiment === 'down').length;
+    // Map and calculate metrics
+    let proposalsWithMetrics = allProposals.map((p: any) => {
+      const pVotes = voteAggregates.filter((v: any) => v.proposalId === p.id);
+      const upVotes = pVotes.filter((v: any) => v.sentiment === 'up').length;
+      const downVotes = pVotes.filter((v: any) => v.sentiment === 'down').length;
 
       return {
         ...p,
@@ -78,29 +100,18 @@ export async function GET(req: NextRequest) {
     });
 
     // Apply Sorting
-    proposalsWithMetrics.sort((a, b) => {
-      if (sortBy === 'recent') {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-      if (sortBy === 'voted') {
-        // Most Voted / Highly Rated = Net Score (Up - Down)
-        return (b.netSentiment || 0) - (a.netSentiment || 0);
-      }
+    proposalsWithMetrics.sort((a: any, b: any) => {
+      if (sortBy === 'recent') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === 'voted') return (b.netSentiment || 0) - (a.netSentiment || 0);
       if (sortBy === 'relevance') {
         const impactScore: Record<string, number> = { 'High': 3, 'Medium': 2, 'Low': 1 };
         const scoreA = impactScore[a.impact] || 0;
         const scoreB = impactScore[b.impact] || 0;
-        
-        // If same impact, fallback to net sentiment
-        if (scoreB === scoreA) {
-          return (b.netSentiment || 0) - (a.netSentiment || 0);
-        }
-        return scoreB - scoreA;
+        return scoreB !== scoreA ? scoreB - scoreA : (b.netSentiment || 0) - (a.netSentiment || 0);
       }
       return 0;
     });
 
-    // Apply Pagination (Slice)
     const paginatedProposals = proposalsWithMetrics.slice(skip, skip + limit);
 
     return NextResponse.json({
@@ -108,6 +119,7 @@ export async function GET(req: NextRequest) {
       total,
       page,
       totalPages: Math.ceil(total / limit),
+      source: 'database'
     });
   } catch (error) {
     console.error('Failed to fetch proposals:', error);

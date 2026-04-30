@@ -10,10 +10,17 @@ export async function GET(
 
     const proposal = await db.proposal.findUnique({
       where: { id },
-    });
+    }).catch(() => null);
 
     if (!proposal) {
-      return NextResponse.json({ error: 'Proposal not found' }, { status: 404 });
+      const { MOCK_PROPOSALS } = await import('@/lib/mock-data');
+      const mock = MOCK_PROPOSALS.find((p: any) => p.id === id);
+      
+      if (!mock) {
+        return NextResponse.json({ error: 'Proposal not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(mock);
     }
 
     const parsed = {

@@ -7,6 +7,13 @@ const adapter = new PrismaBetterSqlite3({ url: dbPath });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // 1. Clear existing data to ensure a fresh start as requested
+  await prisma.anonymizedVote.deleteMany();
+  await prisma.proposal.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.demographicDimension.deleteMany();
+
+  // 2. Seed Demographic Dimensions (Standard setup)
   const dimensions = [
     {
       key: 'ageGroup',
@@ -16,169 +23,95 @@ async function main() {
     {
       key: 'occupation',
       label: 'Occupation',
-      options: JSON.stringify([
-        'Tech Worker',
-        'Student',
-        'Educator',
-        'Public Servant',
-        'Business Owner',
-        'Other',
-      ]),
-    },
-    {
-      key: 'district',
-      label: 'District',
-      options: JSON.stringify([
-        'Centro',
-        'Trindade',
-        'Lagoa',
-        'Campeche',
-        'Continente',
-        'Other',
-      ]),
+      options: JSON.stringify(['Tech Worker', 'Student', 'Educator', 'Public Servant', 'Business Owner', 'Other']),
     },
   ];
 
   for (const dim of dimensions) {
-    await prisma.demographicDimension.upsert({
-      where: { key: dim.key },
-      update: {},
-      create: dim,
-    });
+    await prisma.demographicDimension.create({ data: dim });
   }
 
-  const categories = ['Infrastructure', 'Environmental', 'Economic', 'Social'];
-
-  for (const cat of categories) {
-    await prisma.category.upsert({
-      where: { name: cat },
-      update: {},
-      create: { name: cat },
-    });
+  // 3. Seed Categories
+  const categories = ['Infrastructure & Energy', 'Security & Digital Identity', 'Culture & Public Health'];
+  for (const name of categories) {
+    await prisma.category.create({ data: { name } });
   }
 
-  // --- PROPOSALS MOCK DATA ---
-  const categoriesList = ['Economic', 'Environmental', 'Infrastructure', 'Social'];
-  const impactsList = ['Low', 'Medium', 'High'];
-  
-  const baseProposals = [
+  // 4. Seed Proposals from User Examples
+  const proposals = [
     {
-      id: 'prop-1',
-      title: 'Precision Municipal Tax Rebalancing',
-      category: 'Economic',
+      id: 'prop-solar-canopy',
+      title: 'Implementation of Micro-Grid Solar Canopy in Central Plaza',
+      category: 'Infrastructure & Energy',
       abstract: JSON.stringify({
-        technical: 'Lowering the municipal tax on services (ISS) by 2.2% while compensating through a tiered product levy increase for high-luxury retail.',
-        eli5: 'Lower the tax on daily services like haircuts, but pay for it by slightly higher taxes on expensive luxury items.'
+        eli5: 'We want to build a large solar roof over the main square. It will provide shade during the summer and generate enough free power to run the community center. However, building it will cost a significant amount upfront and the square will be closed for construction for two months.',
+        technical: 'Allocation of 150,000 USDC from the central treasury for the procurement and installation of a 50kW photovoltaic canopy. The infrastructure will be connected to the village micro-grid. Energy surplus will be tokenized via our local smart contract and distributed pro-rata to verified resident wallets to offset individual utility costs.'
       }),
-      content: '## Executive Summary\n\nThis proposal focuses on tax rebalancing. By shifting the burden from services to products, we aim to stimulate the service-based innovation economy in Floripa.',
+      content: `## Overview\nThe Central Plaza is the heart of our community, but it suffers from extreme heat exposure during peak summer hours, reducing its utility. This proposal aims to install a state-of-the-art, semi-transparent photovoltaic canopy. \n\n## Objectives\n*   **Energy Independence:** Generate an estimated 50kW of clean energy daily.\n*   **Climate Adaptation:** Provide critical shade, lowering the ambient temperature of the plaza by up to 4°C.\n*   **Economic Return:** Tokenize surplus energy to subsidize grid costs for all verified residents.\n\n## Implementation Milestones\n1.  **Month 1:** Procurement of materials and structural safety auditing.\n2.  **Month 2:** Complete closure of Central Plaza for heavy construction.\n3.  **Month 3:** Grid integration, safety testing, and smart-contract deployment for energy tokenization.\n\n## Budget Breakdown\n*   **Materials (Solar & Steel):** 90,000 USDC\n*   **Labor & Engineering:** 40,000 USDC\n*   **Smart Contract Audits:** 20,000 USDC`,
       impactMatrix: JSON.stringify({
-        beneficiaries: [
-          { tag: 'Small Businesses', estimate: 1250 },
-          { tag: 'Digital Nomads', estimate: 8000 }
-        ],
-        negativeImpacts: [
-          { tag: 'Luxury Retail', risk: 'Moderate' },
-          { tag: 'Importers', risk: 'Low' }
-        ],
-        financials: {
-          totalCost: 0,
-          currency: 'BRL',
-          roiConfidence: 85
-        }
+        beneficiaries: [{ tag: 'Community Center', estimate: 1 }, { tag: 'Verified Residents', estimate: 500 }],
+        negativeImpacts: [{ tag: 'Local Traffic', risk: 'Moderate' }],
+        financials: { totalCost: 150000, currency: 'USDC', roiConfidence: 85 }
       }),
+      impact: 'High',
       customMetrics: JSON.stringify([
-        { id: 'approval', label: 'Global Approval', description: 'Overall sentiment towards the tax shift.' },
-        { id: 'equality', label: 'Economic Equality', description: 'Will this help bridge the community gap?' },
-        { id: 'simplicity', label: 'Admin Simplicity', description: 'How hard is this to implement?' }
+        { id: 'desirability', label: 'Desirability', description: '1 = Unnecessary, 5 = Highly Desired' },
+        { id: 'feasibility', label: 'Budget Feasibility', description: '1 = Too Expensive/Risky, 5 = Great ROI' },
+        { id: 'disruption', label: 'Disruption Tolerance', description: '1 = Cannot lose the plaza for 2 months, 5 = Acceptable' }
       ]),
-      allowComments: true,
-      impact: 'Medium',
-      createdAt: new Date('2026-04-10T10:00:00Z'),
+      allowComments: true
     },
     {
-      id: 'prop-2',
-      title: 'Bioclimatic Urban Corridor Phase 1',
-      category: 'Environmental',
+      id: 'prop-zk-gates',
+      title: 'Phase 1 Rollout of ZK-Proof Physical Access Gates',
+      category: 'Security & Digital Identity',
       abstract: JSON.stringify({
-        technical: 'Implementation of mandatory green roofing and natural cooling ventilation shafts for commercial buildings > 1000sqm.',
-        eli5: 'New buildings must have gardens on top and use wind instead of AC to stay cool.'
+        eli5: 'Instead of using plastic key cards or facial recognition to enter the gym and co-working spaces, you will simply tap your phone. The system will use advanced math to prove you are a resident without actually tracking or recording your identity, keeping your physical movements completely private.',
+        technical: 'Upgrading physical access control APIs across all communal doors to accept Zero-Knowledge Proof (ZKP) payloads. This integrates with the existing EAS (Ethereum Attestation Service) infrastructure. The gates will verify a resident\'s "Active" credential off-chain without logging the specific wallet address or DID, ensuring Sybil-resistant access with absolute privacy.'
       }),
-      content: '## Sustainability Framework\n\nIntegrating biological cooling systems into vertical architecture. This reduces the heat island effect and municipal power load.',
+      content: `## Overview\nCurrently, our communal spaces rely on legacy RFID fobs and centralized databases that log every entry and exit. To align our physical infrastructure with our digital sovereignty principles, we propose upgrading to ZK-gated physical access.\n\n## Objectives\n*   **Absolute Privacy:** Physical movements (e.g., entering the gym at 2 AM) are verified for access rights but never logged against a specific identity.\n*   **Interoperability:** Leverages the exact same Verifiable Credentials (VCs) and DIDs we already use for digital governance.\n*   **Security:** Eliminates the risk of cloned RFID fobs or centralized database breaches.\n\n## Deployment Strategy\n*   **Phase A:** Retrofitting the Co-working space and Main Gym doors.\n*   **Phase B:** Two-week parallel testing (RFID + ZK Wallet both active).\n*   **Phase C:** Full deprecation of legacy RFID database.\n\n## Budget Breakdown\n*   **Hardware Retrofits (NFC/BLE Readers):** 15,000 USDC\n*   **Middleware Development:** 12,000 USDC`,
       impactMatrix: JSON.stringify({
-        beneficiaries: [
-          { tag: 'Downtown Residents', estimate: 45000 },
-          { tag: 'Energy Grid', estimate: 1 }
-        ],
-        negativeImpacts: [
-          { tag: 'Real Estate Devs', risk: 'Severe' }
-        ],
-        financials: {
-          totalCost: 15000000,
-          currency: 'BRL',
-          roiConfidence: 92
-        }
+        beneficiaries: [{ tag: 'Residents', estimate: 1000 }],
+        negativeImpacts: [{ tag: 'Legacy Users', risk: 'Low' }],
+        financials: { totalCost: 27000, currency: 'USDC', roiConfidence: 95 }
       }),
+      impact: 'Medium',
       customMetrics: JSON.stringify([
-        { id: 'approval', label: 'Global Approval', description: 'Support for mandatory green requirements.' },
-        { id: 'impact', label: 'Climate Impact', description: 'Projected reduction in heat island effect.' }
+        { id: 'privacy', label: 'Privacy Importance', description: '1 = Don\'t care about logging, 5 = Critical upgrade' },
+        { id: 'ux', label: 'UX / Tech Literacy', description: '1 = Too complicated, 5 = Easy transition' },
+        { id: 'urgency', label: 'Urgency', description: '1 = Current system is fine, 5 = Upgrade immediately' }
       ]),
-      allowComments: true,
-      impact: 'High',
-      createdAt: new Date('2026-04-11T14:30:00Z'),
+      allowComments: true
+    },
+    {
+      id: 'prop-culinary-lab',
+      title: 'Establishment of the Open-Source Culinary Lab',
+      category: 'Culture & Public Health',
+      abstract: JSON.stringify({
+        eli5: 'We want to turn the empty annex building into a professional, shared kitchen. It will be a place where residents can host cooking classes, experiment with recipes, and hold large community dinners. We will set aside a monthly budget to keep it stocked with high-quality local ingredients and maintain the equipment.',
+        technical: 'Earmarking a 25,000 USDC setup cost and a 3,000 USDC monthly recurring grant to maintain health-grade culinary equipment. Access and booking of the kitchen will be managed via an NFT-based calendar scheduling system, prioritizing groups over individuals to encourage communal events.'
+      }),
+      content: `## Overview\nA thriving community requires spaces that foster offline connection. The currently vacant Annex B is structurally perfect for a commercial-grade kitchen. This proposal funds the transformation of this space into an "Open-Source Culinary Lab."\n\n## Objectives\n*   **Community Building:** Create a dedicated space for cultural exchange through food, hosting everything from local BBQ workshops to pasta-making masterclasses.\n*   **Health & Education:** Provide access to professional equipment (smokers, industrial mixers, pasta extruders) that individuals wouldn't buy for a single apartment.\n*   **Local Economy:** Use the monthly ingredient stipend to purchase directly from regional farmers and producers.\n\n## Operational Rules\n*   The space must be booked via the decentralized scheduling app.\n*   Priority booking is given to open community events (minimum 10 attendees) over private parties.\n*   A "Steward" credential will be issued to residents who volunteer to manage maintenance and health standard compliance.\n\n## Budget Breakdown\n*   **Initial Setup (Ovens, Ventilation, Prep Stations):** 25,000 USDC\n*   **Recurring Monthly Stipend:** 3,000 USDC`,
+      impactMatrix: JSON.stringify({
+        beneficiaries: [{ tag: 'Local Farmers', estimate: 10 }, { tag: 'Residents', estimate: 300 }],
+        negativeImpacts: [],
+        financials: { totalCost: 25000, currency: 'USDC', roiConfidence: 90 }
+      }),
+      impact: 'Medium',
+      customMetrics: JSON.stringify([
+        { id: 'value', label: 'Cultural Value', description: '1 = Unnecessary, 5 = Vital for bonding' },
+        { id: 'fairness', label: 'Fairness of Access', description: '1 = Monopolized, 5 = Great shared resource' },
+        { id: 'cost', label: 'Ongoing Cost Approval', description: '1 = Waste, 5 = Happy to fund' }
+      ]),
+      allowComments: true
     }
   ];
 
-  // Generate 30 more mock proposals for pagination testing
-  for (let i = 3; i <= 35; i++) {
-    const category = categoriesList[i % categoriesList.length];
-    const impact = impactsList[i % impactsList.length];
-    baseProposals.push({
-      id: `prop-${i}`,
-      title: `${category} Initiative #${i}: Building a Resilient Future`,
-      category: category,
-      abstract: JSON.stringify({
-        technical: `Optimization of ${category.toLowerCase()} resources through automated resource allocation and community oversight platforms version ${i}.0.`,
-        eli5: `A simple way to make our ${category.toLowerCase()} systems work better for everyone in the neighborhood.`
-      }),
-      content: `## Project Overview\n\nThis is a generated mock proposal for ${category}. It aims to improve civic infrastructure by implementing modern standards.\n\n### Goals\n- Improve efficiency\n- Reduce waste\n- Increase transparency`,
-      impactMatrix: JSON.stringify({
-        beneficiaries: [{ tag: 'Local Community', estimate: 500 * i }],
-        negativeImpacts: [{ tag: 'Legacy Systems', risk: i % 2 === 0 ? 'Moderate' : 'Low' }],
-        financials: { totalCost: 10000 * i, currency: 'BRL', roiConfidence: 70 + (i % 25) }
-      }),
-      customMetrics: JSON.stringify([
-        { id: 'approval', label: 'Community Support', description: 'General sentiment.' },
-        { id: 'feasibility', label: 'Technical Feasibility', description: 'Ease of deployment.' }
-      ]),
-      allowComments: true,
-      impact: impact,
-      createdAt: new Date(Date.now() - i * 3600000 * 24), // Spread over days
-    });
+  for (const prop of proposals) {
+    await prisma.proposal.create({ data: prop });
   }
 
-  for (const prop of baseProposals) {
-    const createdProp = await prisma.proposal.upsert({
-      where: { id: prop.id },
-      update: {},
-      create: prop,
-    });
-
-    // Create some random votes for each proposal to test sorting
-    const voteCount = Math.floor(Math.random() * 15);
-    for (let v = 0; v < voteCount; v++) {
-      await prisma.anonymizedVote.create({
-        data: {
-          proposalId: createdProp.id,
-          voterHash: `mock-hash-${createdProp.id}-${v}`,
-          sentiment: Math.random() > 0.3 ? 'up' : 'down',
-          demographics: JSON.stringify({ age: 18 + v, location: 'Virtual' }),
-          responses: JSON.stringify({ approval: Math.floor(Math.random() * 100) }),
-        }
-      });
-    }
-  }
-
-  console.log('✓ Seed complete — 35 proposals and mock votes Created/Synced.');
+  console.log('✓ Seed complete — 3 specific ideas populated in dev.db.');
 }
 
 main()
