@@ -8,17 +8,28 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const proposal = await db.proposal.findUnique({
+    let proposal = await db.proposal.findUnique({
       where: { id },
-    });
+    }).catch(() => null);
 
-    if (!proposal) {
-      return NextResponse.json({ error: 'Proposal not found' }, { status: 404 });
+    let votes: any[] = [];
+    
+    if (proposal) {
+      votes = await db.anonymizedVote.findMany({
+        where: { proposalId: id },
+      });
+    } else {
+      // FALLBACK: Use Mock Data
+      const { MOCK_PROPOSALS, MOCK_VOTES } = await import('@/lib/mock-data');
+      const mockProp = MOCK_PROPOSALS.find(p => p.id === id);
+      
+      if (!mockProp) {
+        return NextResponse.json({ error: 'Proposal not found' }, { status: 404 });
+      }
+      
+      proposal = mockProp as any;
+      votes = MOCK_VOTES.filter(v => v.proposalId === id);
     }
-
-    const votes = await db.anonymizedVote.findMany({
-      where: { proposalId: id },
-    });
 
     const totalParticipants = votes.length;
     
@@ -37,7 +48,9 @@ export async function GET(
 
     // 3. Nuance Metric Averages
     const metricsAverages: Record<string, { sum: number; count: number }> = {};
-    const customMetrics = JSON.parse(proposal.customMetrics);
+    const customMetrics = typeof proposal.customMetrics === 'string' 
+      ? JSON.parse(proposal.customMetrics) 
+      : proposal.customMetrics;
     customMetrics.forEach((m: any) => {
       metricsAverages[m.id] = { sum: 0, count: 0 };
     });

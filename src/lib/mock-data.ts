@@ -130,3 +130,27 @@ export const MOCK_CATEGORIES = [
   { id: 'cat-2', name: 'Security & Digital Identity' },
   { id: 'cat-3', name: 'Culture & Public Health' }
 ];
+
+export const MOCK_VOTES = [
+  // --- Solar Canopy Votes ---
+  ...Array.from({ length: 15 }).map((_, i) => ({
+    proposalId: 'prop-solar-canopy',
+    sentiment: i < 12 ? 'up' : 'down',
+    demographics: JSON.stringify({ age: 18 + (i * 2), location: i % 2 === 0 ? 'Centro' : 'Lagoa' }),
+    responses: JSON.stringify({ desirability: 4 + (i % 2), feasibility: 3 + (i % 3), disruption: 2 + (i % 4) })
+  })),
+  // --- ZK Gates Votes ---
+  ...Array.from({ length: 10 }).map((_, i) => ({
+    proposalId: 'prop-zk-gates',
+    sentiment: i < 8 ? 'up' : 'down',
+    demographics: JSON.stringify({ age: 20 + (i * 3), location: 'Trindade' }),
+    responses: JSON.stringify({ privacy: 5, ux: 3 + (i % 3), urgency: 4 })
+  })),
+  // --- Culinary Lab Votes ---
+  ...Array.from({ length: 20 }).map((_, i) => ({
+    proposalId: 'prop-culinary-lab',
+    sentiment: i < 16 ? 'up' : 'down',
+    demographics: JSON.stringify({ age: 22 + (i * 2), location: i % 3 === 0 ? 'Campeche' : 'Continente' }),
+    responses: JSON.stringify({ value: 4 + (i % 2), fairness: 3 + (i % 3), cost: 5 })
+  }))
+];
